@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Saúde+ Pro Ultimate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+        :root {
+            --primary: #00f2fe;
+            --secondary: #4facfe;
+            --bg-dark: #0a0e14;
+            --card-bg: rgba(23, 28, 38, 0.98);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-dark);
+            color: #f1f5f9;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .screen {
+            display: none;
+            height: 100vh;
+            width: 100%;
+            overflow-y: auto;
+            padding-bottom: 120px;
+            box-sizing: border-box;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .active-screen { 
+            display: flex; 
+            flex-direction: column;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .glass {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #000;
+            font-weight: 800;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .nav-item { transition: all 0.3s; color: #64748b; cursor: pointer; text-align: center; flex: 1; padding: 10px 0; }
+        .nav-item.active { color: var(--primary); }
+
+        .input-field {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+            border-radius: 14px;
+            padding: 12px 16px;
+            width: 100%;
+            appearance: none;
+        }
+
+        select.input-field option {
+            background-color: #171c26;
+            color: white;
+            padding: 10px;
+        }
+
+        .gemini-card {
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.15), rgba(59, 130, 246, 0.15));
+            border: 1px solid rgba(147, 51, 234, 0.3);
+        }
+
+        .hidden { display: none !important; }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .loader {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        #app-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            background: rgba(10, 14, 20, 0.95);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TELA 1: WELCOME -->
+    <div id="screen-welcome" class="screen active-screen p-8 justify-center items-center text-center">
+        <div class="mb-12">
+            <div class="w-32 h-32 bg-cyan-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6 transform rotate-12">
+                <i class="fas fa-heart-pulse text-6xl text-cyan-400"></i>
+            </div>
+            <h1 class="text-4xl font-black tracking-tight mb-2 uppercase">Saúde+ <span class="text-cyan-400 italic">Pro</span></h1>
+            <p class="text-slate-400 text-sm px-6">O seu ecossistema completo de biohacking e performance.</p>
+        </div>
+        <button onclick="navigate('screen-goal')" class="btn-primary w-full py-5 text-lg">Começar Agora</button>
+    </div>
+
+    <!-- TELA 2: OBJETIVO -->
+    <div id="screen-goal" class="screen p-6">
+        <h2 class="text-2xl font-black mt-8 mb-6">Qual seu objetivo?</h2>
+        <div class="space-y-4">
+            <div onclick="selectGoal('perder', this)" class="glass p-5 flex items-center border-2 border-transparent hover:border-cyan-500/50 cursor-pointer transition-all">
+                <i class="fas fa-fire text-red-400 text-xl mr-4"></i>
+                <div><h3 class="font-bold">Perder Peso</h3><p class="text-[10px] text-slate-500 uppercase">Foco em Queima Calórica</p></div>
+            </div>
+            <div onclick="selectGoal('ganhar', this)" class="glass p-5 flex items-center border-2 border-transparent hover:border-cyan-500/50 cursor-pointer transition-all">
+                <i class="fas fa-dumbbell text-emerald-400 text-xl mr-4"></i>
+                <div><h3 class="font-bold">Ganhar Massa</h3><p class="text-[10px] text-slate-500 uppercase">Hipertrofia e Força</p></div>
+            </div>
+            <div onclick="selectGoal('manter', this)" class="glass p-5 flex items-center border-2 border-transparent hover:border-cyan-500/50 cursor-pointer transition-all">
+                <i class="fas fa-leaf text-cyan-400 text-xl mr-4"></i>
+                <div><h3 class="font-bold">Manter Saúde</h3><p class="text-[10px] text-slate-500 uppercase">Longevidade e Bem-estar</p></div>
+            </div>
+        </div>
+        <button onclick="navigate('screen-setup')" class="btn-primary w-full py-5 mt-auto mb-8">Continuar</button>
+    </div>
+
+    <!-- TELA 3: SETUP -->
+    <div id="screen-setup" class="screen p-6">
+        <h2 class="text-2xl font-black mt-8 mb-6">Dados Corporais</h2>
+        
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase ml-2 mb-1 block">Peso (kg)</label>
+                <input type="number" id="input-weight" class="input-field" value="80">
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase ml-2 mb-1 block">Altura (cm)</label>
+                <input type="number" id="input-height" class="input-field" value="175">
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <label class="text-[10px] font-bold text-slate-500 uppercase ml-2 mb-1 block">Frequência de Atividade</label>
+            <div class="relative">
+                <select id="input-activity" class="input-field cursor-pointer">
+                    <option value="1.2">Sedentário (Trabalho de escritório, zero exercício)</option>
+                    <option value="1.375">Leve (Caminhadas ou exercícios 1-2x semana)</option>
+                    <option value="1.55">Moderado (Treino 3-5x por semana)</option>
+                    <option value="1.725">Intenso (Treino pesado todos os dias)</option>
+                    <option value="1.9">Atleta (2 treinos por dia ou trabalho braçal pesado)</option>
+                </select>
+                <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"></i>
+            </div>
+        </div>
+
+        <div class="glass p-5 mb-8 text-center bg-cyan-500/5 border-cyan-500/20 border">
+            <p class="text-[10px] font-black text-cyan-400 uppercase mb-2 tracking-widest">IMC Calculado</p>
+            <h2 id="setup-imc-val" class="text-4xl font-black">--.-</h2>
+            <p id="setup-imc-desc" class="text-[10px] text-slate-500 mt-1 uppercase">Aguardando dados...</p>
+        </div>
+
+        <button onclick="saveSetup()" class="btn-primary w-full py-5 mb-8">Configurar Minha Dieta</button>
+    </div>
+
+    <!-- TELA 4: DASHBOARD -->
+    <div id="screen-home" class="screen p-6">
+        <header class="flex justify-between items-center mb-8 pt-4">
+            <div>
+                <p id="dash-date" class="text-[10px] text-cyan-500 font-bold uppercase tracking-widest">Carregando...</p>
+                <h1 class="text-2xl font-black uppercase">Painel de Controle</h1>
+            </div>
+            <button onclick="askGeminiFeedback()" class="w-12 h-12 gemini-card rounded-2xl flex items-center justify-center text-purple-400 shadow-xl">
+                <i class="fas fa-wand-sparkles"></i>
+            </button>
+        </header>
+
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="glass p-4 border-l-4 border-cyan-500">
+                <p class="text-[8px] font-black text-slate-500 uppercase">IMC Atual</p>
+                <h4 id="dash-imc" class="text-xl font-black mt-1">--.-</h4>
+            </div>
+            <div class="glass p-4 border-l-4 border-emerald-500">
+                <p class="text-[8px] font-black text-slate-500 uppercase">Gasto Mensal</p>
+                <h4 id="dash-profit" class="text-xl font-black mt-1 text-emerald-400">R$ 0,00</h4>
+            </div>
+        </div>
+
+        <div id="gemini-status" class="hidden gemini-card p-4 rounded-2xl mb-6 border border-purple-500/30">
+            <p id="gemini-text" class="text-[11px] leading-relaxed text-slate-200 italic"></p>
+        </div>
+
+        <div class="glass p-6 mb-8">
+            <div class="flex justify-between items-end mb-4">
+                <div>
+                    <p class="text-[9px] font-black text-slate-500 uppercase">Ingestão Calórica</p>
+                    <h2 class="text-3xl font-black"><span id="dash-kcal-consumed">0</span> / <span id="dash-kcal-limit">0</span></h2>
+                </div>
+                <span id="dash-kcal-status" class="bg-emerald-500/10 text-emerald-400 text-[10px] px-2 py-1 rounded font-bold uppercase tracking-widest">Em Dia</span>
+            </div>
+            <div class="w-full h-3 bg-white/5 rounded-full overflow-hidden mb-6">
+                <div id="bar-kcal" class="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-700" style="width: 0%"></div>
+            </div>
+            <div class="grid grid-cols-3 text-center gap-2">
+                <div class="bg-white/5 p-2 rounded-xl"><p class="text-white text-sm font-black" id="val-prot">0g</p><p class="text-[8px] text-slate-500 uppercase">Proteína</p></div>
+                <div class="bg-white/5 p-2 rounded-xl"><p class="text-white text-sm font-black" id="val-carb">0g</p><p class="text-[8px] text-slate-500 uppercase">Carbos</p></div>
+                <div class="bg-white/5 p-2 rounded-xl"><p class="text-white text-sm font-black" id="val-fat">0g</p><p class="text-[8px] text-slate-500 uppercase">Gorduras</p></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <button onclick="navigate('screen-food-log')" class="glass p-6 flex flex-col items-center gap-2 bg-orange-500/5 hover:bg-orange-500/10 transition-colors">
+                <i class="fas fa-utensils text-orange-400 text-2xl"></i>
+                <span class="text-[10px] font-black uppercase">Refeições</span>
+            </button>
+            <button onclick="navigate('screen-workout')" class="glass p-6 flex flex-col items-center gap-2 bg-purple-500/5 hover:bg-purple-500/10 transition-colors">
+                <i class="fas fa-dumbbell text-purple-400 text-2xl"></i>
+                <span class="text-[10px] font-black uppercase">Treinos</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- TELA 5: DIETA -->
+    <div id="screen-food-log" class="screen p-6">
+        <header class="flex items-center mb-6 pt-4">
+            <button onclick="navigate('screen-home')" class="w-10 h-10 rounded-full bg-white/5 mr-4 flex items-center justify-center"><i class="fas fa-chevron-left"></i></button>
+            <h2 class="text-xl font-black">Dieta & IA</h2>
+        </header>
+
+        <div class="grid grid-cols-2 gap-3 mb-8">
+            <button onclick="openManualFoodModal()" class="glass p-5 flex flex-col items-center gap-2 border-b-4 border-cyan-500">
+                <i class="fas fa-keyboard text-cyan-400"></i>
+                <span class="text-[10px] font-black uppercase">Texto IA</span>
+            </button>
+            <button onclick="openImageFoodModal()" class="glass p-5 flex flex-col items-center gap-2 border-b-4 border-purple-500">
+                <i class="fas fa-camera text-purple-400"></i>
+                <span class="text-[10px] font-black uppercase">Foto IA</span>
+            </button>
+        </div>
+
+        <h3 class="text-[10px] font-black text-slate-500 uppercase mb-4 tracking-widest">Sugestões de Hoje</h3>
+        <div id="meal-suggestions" class="space-y-3 mb-8"></div>
+
+        <h3 class="text-[10px] font-black text-slate-500 uppercase mb-4 tracking-widest">Log de Alimentos</h3>
+        <div id="food-history" class="space-y-2">
+            <p class="text-center text-slate-600 text-[10px] py-10">Você ainda não registrou nada hoje.</p>
+        </div>
+    </div>
+
+    <!-- TELA 6: TREINOS -->
+    <div id="screen-workout" class="screen p-6">
+        <header class="flex items-center mb-6 pt-4">
+            <button onclick="navigate('screen-home')" class="w-10 h-10 rounded-full bg-white/5 mr-4 flex items-center justify-center"><i class="fas fa-chevron-left"></i></button>
+            <h2 class="text-xl font-black">Meu Plano de Treino</h2>
+        </header>
+
+        <div class="flex gap-2 mb-6">
+            <button onclick="openManualWorkoutModal()" class="flex-1 glass p-4 flex items-center justify-center gap-2 text-[10px] font-black uppercase">
+                <i class="fas fa-plus text-emerald-400"></i> Manual
+            </button>
+            <button onclick="generateGeminiWorkout()" class="flex-1 gemini-card p-4 flex items-center justify-center gap-2 text-[10px] font-black uppercase">
+                <i class="fas fa-robot text-purple-400"></i> Gerar IA
+            </button>
+        </div>
+
+        <div id="workout-list" class="space-y-4"></div>
+    </div>
+
+    <!-- TELA 7: FINANÇAS -->
+    <div id="screen-finances" class="screen p-6">
+        <header class="flex items-center mb-6 pt-4">
+            <button onclick="navigate('screen-home')" class="w-10 h-10 rounded-full bg-white/5 mr-4 flex items-center justify-center"><i class="fas fa-chevron-left"></i></button>
+            <h2 class="text-xl font-black">Minhas Finanças</h2>
+        </header>
+
+        <div class="glass p-6 mb-8 bg-emerald-500/5 border-emerald-500/20 border text-center">
+            <p class="text-[10px] text-slate-500 uppercase font-black mb-1">Total de Gastos Mensais</p>
+            <h2 id="fin-profit-large" class="text-4xl font-black text-emerald-400">R$ 0,00</h2>
+            <p id="fin-summary-text" class="text-[10px] text-slate-400 mt-3 font-medium uppercase tracking-wider">Então essa é minha finança gasta no mês</p>
+        </div>
+
+        <div class="space-y-6">
+            <div class="glass p-5">
+                <div class="flex justify-between items-center mb-3">
+                    <label class="text-[10px] font-black text-slate-400 uppercase">Mensalidade Academia</label>
+                    <span class="text-xs font-bold text-cyan-400">R$ <span id="val-gym-display">120</span></span>
+                </div>
+                <input type="range" id="spend-gym" min="0" max="1000" step="10" value="120" oninput="calcFinance()" class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-cyan-500">
+            </div>
+
+            <div class="glass p-5">
+                <div class="flex justify-between items-center mb-3">
+                    <label class="text-[10px] font-black text-slate-400 uppercase">Gasto com Dieta</label>
+                    <span class="text-xs font-bold text-cyan-400">R$ <span id="val-food-display">450</span></span>
+                </div>
+                <input type="range" id="spend-food" min="0" max="3000" step="50" value="450" oninput="calcFinance()" class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-cyan-500">
+            </div>
+
+            <div class="p-4 text-center">
+                <p class="text-[9px] text-slate-600 uppercase leading-relaxed">Os valores acima são estimativas mensais para manter seu estilo de vida atual.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- NAVEGAÇÃO FIXA -->
+    <nav id="app-nav" class="hidden">
+        <div onclick="navigate('screen-home')" class="nav-item active">
+            <i class="fas fa-house text-lg"></i>
+            <p class="text-[8px] font-black uppercase mt-1">Home</p>
+        </div>
+        <div onclick="navigate('screen-food-log')" class="nav-item">
+            <i class="fas fa-utensils text-lg"></i>
+            <p class="text-[8px] font-black uppercase mt-1">Dieta</p>
+        </div>
+        <div onclick="navigate('screen-workout')" class="nav-item">
+            <i class="fas fa-dumbbell text-lg"></i>
+            <p class="text-[8px] font-black uppercase mt-1">Treino</p>
+        </div>
+        <div onclick="navigate('screen-finances')" class="nav-item">
+            <i class="fas fa-wallet text-lg"></i>
+            <p class="text-[8px] font-black uppercase mt-1">Reais</p>
+        </div>
+    </nav>
+
+    <!-- MODAL MANUAL -->
+    <div id="modal-food-manual" class="modal hidden">
+        <div class="glass w-full max-w-md p-6">
+            <h3 class="text-lg font-black uppercase mb-4 text-cyan-400">O que você comeu?</h3>
+            <textarea id="food-input-text" class="input-field h-32 mb-4" placeholder="Ex: Tomei café com 1 pão e queijo..."></textarea>
+            <div class="flex gap-2">
+                <button onclick="closeModals()" class="flex-1 p-4 rounded-xl bg-white/5 font-bold uppercase text-[10px]">Cancelar</button>
+                <button onclick="processFoodWithIA()" class="flex-2 btn-primary p-4 rounded-xl px-8 uppercase text-[10px]">Analisar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL IMAGEM -->
+    <div id="modal-food-image" class="modal hidden">
+        <div class="glass w-full max-w-md p-6 text-center">
+            <h3 class="text-lg font-black uppercase mb-4 text-purple-400">Análise de Prato</h3>
+            <div id="image-preview" class="w-full h-48 bg-white/5 rounded-2xl mb-4 flex items-center justify-center border-2 border-dashed border-white/10 overflow-hidden">
+                <i class="fas fa-camera text-4xl text-slate-700"></i>
+            </div>
+            <input type="file" id="image-upload" accept="image/*" class="hidden" onchange="previewImage(this)">
+            <button onclick="document.getElementById('image-upload').click()" class="w-full p-4 mb-4 rounded-xl bg-white/10 font-bold uppercase text-[10px]">Selecionar Foto</button>
+            <div class="flex gap-2">
+                <button onclick="closeModals()" class="flex-1 p-4 rounded-xl bg-white/5 font-bold uppercase text-[10px]">Voltar</button>
+                <button onclick="processFoodImageWithIA()" class="flex-2 btn-primary p-4 rounded-xl px-8 uppercase text-[10px]">Identificar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TREINO -->
+    <div id="modal-workout-manual" class="modal hidden">
+        <div class="glass w-full max-w-md p-6">
+            <h3 class="text-lg font-black uppercase mb-4">Novo Exercício</h3>
+            <input type="text" id="work-name" class="input-field mb-4" placeholder="Nome do exercício">
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <input type="text" id="work-sets" class="input-field" placeholder="Séries">
+                <input type="text" id="work-reps" class="input-field" placeholder="Reps">
+            </div>
+            <div class="flex gap-2">
+                <button onclick="closeModals()" class="flex-1 p-4 rounded-xl bg-white/5 font-bold uppercase text-[10px]">Cancelar</button>
+                <button onclick="addManualWorkout()" class="flex-2 btn-primary p-4 rounded-xl px-8 uppercase text-[10px]">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const apiKey = ""; 
+        let state = {
+            goal: null, weight: 80, height: 175, activity: 1.2, imc: 0,
+            kcalLimit: 2000, consumed: { kcal: 0, prot: 0, carb: 0, fat: 0 },
+            history: [], workouts: [],
+            currentImage64: null
+        };
+
+        function navigate(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+            document.getElementById(id).classList.add('active-screen');
+            const nav = document.getElementById('app-nav');
+            if(['screen-home', 'screen-food-log', 'screen-workout', 'screen-finances'].includes(id)) {
+                nav.classList.remove('hidden');
+                updateNavIcons(id);
+            } else {
+                nav.classList.add('hidden');
+            }
+            if(id === 'screen-home') updateDashboard();
+            if(id === 'screen-finances') calcFinance();
+        }
+
+        function updateNavIcons(id) {
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            const map = {'screen-home': 0, 'screen-food-log': 1, 'screen-workout': 2, 'screen-finances': 3};
+            document.querySelectorAll('.nav-item')[map[id]].classList.add('active');
+        }
+
+        function selectGoal(g, el) {
+            state.goal = g;
+            document.querySelectorAll('.screen-goal .glass').forEach(o => o.style.borderColor = 'transparent');
+            el.style.borderColor = 'var(--primary)';
+        }
+
+        function updateIMC() {
+            const w = parseFloat(document.getElementById('input-weight').value) || 0;
+            const h = parseFloat(document.getElementById('input-height').value) / 100 || 0;
+            if (w > 0 && h > 0) {
+                state.imc = (w / (h * h)).toFixed(1);
+                document.getElementById('setup-imc-val').innerText = state.imc;
+                let desc = "Normal";
+                if(state.imc < 18.5) desc = "Abaixo do peso";
+                else if(state.imc < 25) desc = "Peso Saudável";
+                else if(state.imc < 30) desc = "Sobrepeso";
+                else desc = "Obesidade";
+                document.getElementById('setup-imc-desc').innerText = desc;
+            }
+        }
+
+        document.getElementById('input-weight').addEventListener('input', updateIMC);
+        document.getElementById('input-height').addEventListener('input', updateIMC);
+
+        function saveSetup() {
+            state.weight = parseFloat(document.getElementById('input-weight').value);
+            state.height = parseFloat(document.getElementById('input-height').value);
+            state.activity = parseFloat(document.getElementById('input-activity').value);
+            if(!state.goal) return alert("Selecione um objetivo!");
+
+            const bmr = (10 * state.weight) + (6.25 * state.height) - (5 * 25) + 5;
+            const tdee = bmr * state.activity;
+
+            if(state.goal === 'perder') state.kcalLimit = Math.round(tdee - 500);
+            else if(state.goal === 'ganhar') state.kcalLimit = Math.round(tdee + 400);
+            else state.kcalLimit = Math.round(tdee);
+
+            renderInitialData();
+            navigate('screen-home');
+        }
+
+        function updateDashboard() {
+            document.getElementById('dash-date').innerText = new Date().toLocaleDateString('pt-BR', {weekday: 'long', day: 'numeric'});
+            document.getElementById('dash-imc').innerText = state.imc;
+            
+            document.getElementById('dash-kcal-consumed').innerText = state.consumed.kcal;
+            document.getElementById('dash-kcal-limit').innerText = state.kcalLimit;
+            
+            const pct = Math.min((state.consumed.kcal / state.kcalLimit) * 100, 100);
+            document.getElementById('bar-kcal').style.width = pct + "%";
+            
+            const statusEl = document.getElementById('dash-kcal-status');
+            if(state.consumed.kcal > state.kcalLimit) {
+                statusEl.innerText = "EXCEDEU";
+                statusEl.className = "bg-red-500/10 text-red-400 text-[10px] px-2 py-1 rounded font-bold uppercase tracking-widest";
+            } else {
+                statusEl.innerText = "EM DIA";
+                statusEl.className = "bg-emerald-500/10 text-emerald-400 text-[10px] px-2 py-1 rounded font-bold uppercase tracking-widest";
+            }
+            
+            document.getElementById('val-prot').innerText = Math.round(state.consumed.prot) + "g";
+            document.getElementById('val-carb').innerText = Math.round(state.consumed.carb) + "g";
+            document.getElementById('val-fat').innerText = Math.round(state.consumed.fat) + "g";
+            
+            calcFinance();
+        }
+
+        async function processFoodWithIA() {
+            const textInput = document.getElementById('food-input-text').value;
+            if(!textInput) return;
+            const btn = document.querySelector('#modal-food-manual button.btn-primary');
+            btn.innerHTML = '<span class="loader"></span>';
+            const systemPrompt = `Nutricionista: Analise e retorne apenas JSON: {"nome": "string", "kcal": number, "prot": number, "carb": number, "fat": number}`;
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: textInput }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        generationConfig: { responseMimeType: "application/json" }
+                    })
+                });
+                const data = await response.json();
+                const result = JSON.parse(data.candidates[0].content.parts[0].text);
+                addFoodToState(result);
+                closeModals();
+                document.getElementById('food-input-text').value = '';
+            } catch (e) { alert("Erro de processamento."); } 
+            finally { btn.innerHTML = 'Analisar'; }
+        }
+
+        async function processFoodImageWithIA() {
+            if(!state.currentImage64) return alert("Falta foto!");
+            const btn = document.querySelector('#modal-food-image button.btn-primary');
+            btn.innerHTML = '<span class="loader"></span>';
+            const prompt = `Analise o alimento na imagem. JSON: {"nome": "string", "kcal": number, "prot": number, "carb": number, "fat": number}`;
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [
+                            { text: prompt },
+                            { inlineData: { mimeType: "image/png", data: state.currentImage64 } }
+                        ] }],
+                        generationConfig: { responseMimeType: "application/json" }
+                    })
+                });
+                const data = await response.json();
+                const result = JSON.parse(data.candidates[0].content.parts[0].text);
+                addFoodToState(result);
+                closeModals();
+            } catch (e) { alert("Não identifiquei o prato."); } 
+            finally { btn.innerHTML = 'Identificar'; }
+        }
+
+        function addFoodToState(item) {
+            state.consumed.kcal += Math.round(item.kcal);
+            state.consumed.prot += item.prot;
+            state.consumed.carb += item.carb;
+            state.consumed.fat += item.fat;
+            
+            const list = document.getElementById('food-history');
+            if(list.innerText.includes('Você ainda não')) list.innerHTML = '';
+            
+            const d = document.createElement('div');
+            d.className = "glass p-4 flex justify-between items-center animate-fadeIn";
+            d.innerHTML = `<div><p class="text-xs font-bold text-white">${item.nome}</p><p class="text-[8px] text-slate-500 uppercase">${Math.round(item.prot)}P • ${Math.round(item.carb)}C • ${Math.round(item.fat)}G</p></div><p class="text-sm font-black text-cyan-400">+${Math.round(item.kcal)} kcal</p>`;
+            list.prepend(d);
+            
+            updateDashboard();
+        }
+
+        async function generateGeminiWorkout() {
+            const list = document.getElementById('workout-list');
+            list.innerHTML = '<div class="glass p-8 text-center"><span class="loader"></span></div>';
+            const prompt = `Gere um treino focado em ${state.goal}. JSON: [{"exercicio": "string", "series": "string", "reps": "string"}]`;
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { responseMimeType: "application/json" }
+                    })
+                });
+                const data = await response.json();
+                const workouts = JSON.parse(data.candidates[0].content.parts[0].text);
+                list.innerHTML = '';
+                workouts.forEach(w => addWorkoutToUI(w.exercicio, w.series, w.reps));
+            } catch (e) { alert("Erro ao gerar treino."); }
+        }
+
+        async function askGeminiFeedback() {
+            const status = document.getElementById('gemini-status');
+            const text = document.getElementById('gemini-text');
+            status.classList.remove('hidden');
+            text.innerHTML = '<span class="loader"></span>';
+            const prompt = `Dê um feedback curto e motivador baseado: Objetivo ${state.goal}, Peso ${state.weight}kg, Ingestão ${state.consumed.kcal}/${state.kcalLimit}kcal hoje.`;
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                const data = await response.json();
+                text.innerText = data.candidates[0].content.parts[0].text;
+            } catch (e) { status.classList.add('hidden'); }
+        }
+
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('image-preview').innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+                    state.currentImage64 = e.target.result.split(',')[1];
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function addManualWorkout() {
+            const name = document.getElementById('work-name').value;
+            const sets = document.getElementById('work-sets').value;
+            const reps = document.getElementById('work-reps').value;
+            if(name) addWorkoutToUI(name, sets, reps);
+            closeModals();
+        }
+
+        function addWorkoutToUI(name, sets, reps) {
+            const list = document.getElementById('workout-list');
+            const d = document.createElement('div');
+            d.className = "glass p-5 border-l-4 border-purple-500 flex justify-between items-center";
+            d.innerHTML = `<div><h5 class="text-sm font-black text-purple-400 uppercase">${name}</h5><p class="text-xs text-slate-400">${sets} x ${reps}</p></div>`;
+            list.prepend(d);
+        }
+
+        function renderInitialData() {
+            const meals = [
+                {t: "Café da Manhã", i: "2 Ovos + Pão", k: 350},
+                {t: "Almoço", i: "Arroz, Feijão e Carne", k: 650}
+            ];
+            document.getElementById('meal-suggestions').innerHTML = meals.map(m => `
+                <div class="glass p-4 flex justify-between items-center">
+                    <div><p class="text-[8px] font-black text-slate-500 uppercase">${m.t}</p><p class="text-xs font-bold">${m.i}</p></div>
+                    <button onclick="addFoodToState({nome: '${m.i}', kcal: ${m.k}, prot: 25, carb: 40, fat: 12})" class="w-8 h-8 rounded-full bg-cyan-500/10 text-cyan-400 flex items-center justify-center"><i class="fas fa-plus"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function calcFinance() {
+            const gym = parseFloat(document.getElementById('spend-gym').value) || 0;
+            const food = parseFloat(document.getElementById('spend-food').value) || 0;
+            
+            // Atualiza os displays numéricos
+            document.getElementById('val-gym-display').innerText = gym;
+            document.getElementById('val-food-display').innerText = food;
+            
+            // Soma simples dos gastos mensais
+            const total = gym + food;
+            
+            // Atualiza UI principal das finanças
+            document.getElementById('fin-profit-large').innerText = `R$ ${total.toFixed(2)}`;
+            
+            // Também atualiza o card pequeno no Home (Dashboard)
+            const homeProfitEl = document.getElementById('dash-profit');
+            if(homeProfitEl) homeProfitEl.innerText = `R$ ${total.toFixed(2)}`;
+        }
+
+        function openManualFoodModal() { document.getElementById('modal-food-manual').classList.remove('hidden'); }
+        function openImageFoodModal() { document.getElementById('modal-food-image').classList.remove('hidden'); }
+        function openManualWorkoutModal() { document.getElementById('modal-workout-manual').classList.remove('hidden'); }
+        function closeModals() { document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')); }
+
+        window.onload = updateIMC;
+    </script>
+</body>
+</html>
